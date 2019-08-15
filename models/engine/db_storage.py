@@ -2,12 +2,11 @@
 """Creates a database engine
    to creates, manipulates, query relational tables
 """
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, MetaData
 from sqlalchemy.orm import sessionmaker, scoped_session
 from os import getenv
 from datetime import datetime
-from sqlalchemy.ext.declarative import declarative_base
-from models.base_model import BaseModel
+from models.base_model import BaseModel, Base
 from models.user import User
 from models.state import State
 from models.city import City
@@ -16,10 +15,7 @@ from models.place import Place
 from models.review import Review
 
 
-Base = declarative_base()
-
-
-class DBStorage:
+class DBStorage():
     """database class"""
     __engine = None
     __session = None
@@ -27,12 +23,19 @@ class DBStorage:
     def __init__(self):
         """constructor of the database instance"""
         self.__engine = create_engine(
-            'mysql+mysqldb://{}:{}@{}/{}'.format(
+            'mysql+mysqldb://{}:{}@{}:3306/{}'.format(
                 getenv('HBNB_MYSQL_USER'),
                 getenv('HBNB_MYSQL_PWD'),
                 getenv('HBNB_MYSQL_HOST'),
                 getenv('HBNB_MYSQL_DB')),
             pool_pre_ping=True)
+
+         #   Base.metadata.drop_all(bind=self.__engine)
+
+    def all(self, cls=None):
+        """query database by cls type
+            return a dictionary
+        """
         all_type = {
             "User": User,
             "State": State,
@@ -41,32 +44,21 @@ class DBStorage:
             "Place": Place,
             "Review": Review
             }
-        if getenv('HBNB_ENV') == 'test':
-            Base.metadata.drop_all(bind=self.__engine)
 
-    def all(self, cls=None):
-        """query database by cls type
-            return a dictionary
-        """
-        my_dic = {}
+        my_list = []
         if cls:
-            objs = self.__session.query(cls)
+            my_list = self.__session.query(cls)
         else:
-            objs = self.__session.query(State).all()
-            objs += self.__session.query(City).all()
-            objs += self.__session.query(User).all()
-            objs += self.__session.query(Place).all()
-            objs += self.__session.query(Amenity).all()
-            objs += self.__session.query(Review).all()
-        for obj in objs:
-            key = '{}.{}'.format(type(obj).__name__, obj.id)
-            my_dic[key] = obj
-        return (my_dic)
+            for cls in all_type.values():
+                my_list += self.__session.query(cls)
+        return {type(obj).__name__ + "." + obj.id: obj for obj in my_list}
 
     def new(self, obj):
         """add a new obj to table
         database session self.__session
         """
+        if not obj:
+            return
         self.__session.add(obj)
 
     def save(self):
@@ -76,22 +68,18 @@ class DBStorage:
     def delete(self, obj=None):
         """deletes the obj from table"""
         if obj:
-            self.__session.expunge(obj)
-        self.save()
+            self.__session.delete(obj)
+            self.save()
 
     def reload(self):
         """reloads the database"""
-        from models.user import User
-        from models.state import State
-        from models.city import City
-        from models.amenity import Amenity
-        from models.place import Place
-        from models.review import Review
-
+        if getenv("HBNB_ENV") == "test":
+            Base.metadata.drop_all(bind=self.__engine)
         Base.metadata.create_all(self.__engine)
-        self.__session = sessionmaker(bind=self.__engine,
+
+        session_factory = sessionmaker(bind=self.__engine,
                                       expire_on_commit=False)
-        Session = scoped_session(self.__session)
+        Session = scoped_session(session_factory)
         self.__session = Session()
 
     def classes(self):

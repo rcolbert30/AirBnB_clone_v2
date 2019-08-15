@@ -4,7 +4,7 @@ from models.base_model import BaseModel, Base
 from sqlalchemy import String, Column, Integer
 from sqlalchemy import DateTime, ForeignKey
 from sqlalchemy import Float, Table
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 import models
 from models.city import City
 from models.amenity import Amenity
@@ -42,8 +42,12 @@ class Place(BaseModel, Base):
         amenity_ids: list of Amenity ids
     """
     __tablename__ = 'places'
-    city_id = Column(String(60), ForeignKey('cities.id'), nullable=False)
-    user_id = Column(String(60), ForeignKey('users.id'), nullable=False)
+    city_id = Column(String(60),
+                     ForeignKey('cities.id', ondelete='CASCADE'),
+                     nullable=False)
+    user_id = Column(String(60),
+                     ForeignKey('users.id', ondelete='CASCADE'),
+                     nullable=False)
     name = Column(String(128), nullable=False)
     description = Column(String(1024), nullable=True)
     number_rooms = Column(Integer, default=0, nullable=False)
@@ -55,18 +59,21 @@ class Place(BaseModel, Base):
     amenity_ids = []
 
     if getenv("HBNB_TYPE_STORAGE") == "db":
-        reviews = relationship('Review', backref='place',
-                               cascade='all, delete-orphan')
-        amenities = relationship('Amenity', backref='place',
+        reviews = relationship('Review',
+                               backref=backref('place',
+                               cascade='all, delete-orphan'),
+                               passive_deletes=True)
+        amenities = relationship('Amenity',
                                  secondary='place_amenity',
-                                 viewonly=False)
+                                 viewonly=False,
+                                 back_populates='place_amenities')
     else:
         @property
         def reviews(self):
             """getter reviews attribute in file storage
             """
-            return [review for review in models.storage.all(Review)
-                    if review.place_id == self.id]
+            return {key: value for key, value in models.storage.all().items()
+                    if value.place_id == self.id}
 
         @property
         def amenities(self):
@@ -79,5 +86,5 @@ class Place(BaseModel, Base):
         def amenities(self, obj):
             """setter to set amenities value
             """
-            if (type(obj) == Amenity):
+            if type(obj) is Amenity and obj.id not in self.amenity_ids:
                 self.amenity_ids.append(obj.id)
