@@ -42,11 +42,24 @@ class HBNBCommand(cmd.Cmd):
             print("** class name missing **")
             return (False)
         my_list = line.split(" ")
+
+        print("*****my_list****{}".format(my_list[0]))
+
         if not my_list[0] in HBNBCommand.all_classes:
             print("** class doesn't exist **")
             return (False)
-        arg = self.split_args(my_list[1:])
-        obj = eval(my_list[0])(**arg)
+        print("*****len****{}".format(len(my_list)))
+
+        obj = eval("{}()".format(my_list[0]))
+
+
+        if len(my_list) > 1:
+            arg = self.split_args(my_list[1:])         
+   
+            print("*****arg****{}".format(arg))
+
+            for key, value in arg:
+                setattr(obj, key, value)
         obj.save()
         print("{}".format(obj.id))
 
@@ -66,6 +79,7 @@ class HBNBCommand(cmd.Cmd):
                 items[1] = int(items[1])
             args_dic.update({items[0]: items[1]})
         return (args_dic)
+
 
     def do_show(self, line):
         """Prints the string representation of an instance

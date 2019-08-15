@@ -1,4 +1,9 @@
-# HBNB
+# AirBnB Clone Project in Holberton School
+
+This project use API module "SQLAlchemy" to access MySql, in the back end, this system
+have two kind of data storage. one is Filestorage, data store in file with Json format.
+The other is Database Table, python code via SQLAlchemy API package to create or manipulate
+data table.
 
 This is the console /command interpreter for the Holberton Airbnb clone project. The console can be used to store objects in and retrieve objects from a JSON.
 
