@@ -5,7 +5,6 @@ from os import getenv
 from sqlalchemy.orm import relationship
 from sqlalchemy import Column, String
 from sqlalchemy import Table, ForeignKey
-from models.place import Place
 
 
 class Amenity(BaseModel, Base):
