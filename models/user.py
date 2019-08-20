@@ -19,10 +19,10 @@ class User(BaseModel, Base):
     first_name = Column(String(128), nullable=True)
     last_name = Column(String(128), nullable=True)
     places = relationship('Place',
-                          backref=backref('user', cascade='all, delete-orphan'),
+                          backref='user', cascade='all, delete-orphan',
                           passive_deletes=True,
                           single_parent=True)
     reviews = relationship('Review',
-                           backref=backref('user', cascade='all, delete-orphan'),
+                           backref='user', cascade='all, delete-orphan',
                            passive_deletes=True,
                            single_parent=True)

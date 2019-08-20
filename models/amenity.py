@@ -1,10 +1,9 @@
 #!/usr/bin/python3
 """This is the amenity class"""
-from models.base_model import BaseModel, Base
 from os import getenv
+from models.base_model import BaseModel, Base
 from sqlalchemy.orm import relationship
 from sqlalchemy import Column, String
-from sqlalchemy import Table, ForeignKey
 
 
 class Amenity(BaseModel, Base):
@@ -17,4 +16,6 @@ class Amenity(BaseModel, Base):
     if getenv("HBNB_TYPE_STORAGE") == "db":
         place_amenities = relationship('Place',
                                        secondary='place_amenity',
-                                       back_populates='amenities')
+                                       back_populates='amenities',
+                                       passive_deletes=True,
+                                       single_parent=True)

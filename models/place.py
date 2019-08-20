@@ -1,11 +1,11 @@
 #!/usr/bin/python3
 """This is the place class"""
-from models.base_model import BaseModel, Base
-from sqlalchemy import String, Column, Integer
-from sqlalchemy import DateTime, ForeignKey
+from sqlalchemy import String, DateTime
+from sqlalchemy import Column, ForeignKey, Integer
 from sqlalchemy import Float, Table
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship
 import models
+from models.base_model import BaseModel, Base
 from models.city import City
 from models.amenity import Amenity
 from models.review import Review
@@ -26,6 +26,7 @@ if getenv("HBNB_TYPE_STORAGE") == "db":
                                  nullable=False))
 
 
+
 class Place(BaseModel, Base):
     """This is the class for Place
     Attributes:
@@ -42,12 +43,8 @@ class Place(BaseModel, Base):
         amenity_ids: list of Amenity ids
     """
     __tablename__ = 'places'
-    city_id = Column(String(60),
-                     ForeignKey('cities.id', ondelete='CASCADE'),
-                     nullable=False)
-    user_id = Column(String(60),
-                     ForeignKey('users.id', ondelete='CASCADE'),
-                     nullable=False)
+    city_id = Column(String(60), ForeignKey('cities.id'), nullable=False)
+    user_id = Column(String(60), ForeignKey('users.id'), nullable=False)
     name = Column(String(128), nullable=False)
     description = Column(String(1024), nullable=True)
     number_rooms = Column(Integer, default=0, nullable=False)
@@ -59,32 +56,27 @@ class Place(BaseModel, Base):
     amenity_ids = []
 
     if getenv("HBNB_TYPE_STORAGE") == "db":
-        reviews = relationship('Review',
-                               backref=backref('place',
-                               cascade='all, delete-orphan'),
-                               passive_deletes=True)
+        reviews = relationship('Review', backref='place',
+                               cascade='all, delete-orphan')
+
         amenities = relationship('Amenity',
-                                 secondary='place_amenity',
-                                 viewonly=False,
-                                 back_populates='place_amenities')
+                                secondary='place_amenity',
+                                backref='places', viewonly=False)
     else:
         @property
         def reviews(self):
-            """getter reviews attribute in file storage
-            """
-            return {key: value for key, value in models.storage.all().items()
-                    if value.place_id == self.id}
+            """Getter attribute in case of file storage"""
+            return [review for review in models.storage.all(Review)
+                    if review.place_id == self.id]
 
         @property
         def amenities(self):
-            """getter amenities attributes in file storage
-            """
+            """Getter attribute in case of file storage"""
             return [amenity for amenity in models.storage.all(Amenity)
                     if amenity.id in self.amenity_ids]
 
         @amenities.setter
         def amenities(self, obj):
-            """setter to set amenities value
-            """
+            """Setter method for amenities"""
             if type(obj) is Amenity and obj.id not in self.amenity_ids:
                 self.amenity_ids.append(obj.id)
