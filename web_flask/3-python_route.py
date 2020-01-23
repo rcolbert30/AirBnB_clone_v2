@@ -33,8 +33,8 @@ def python_text(text="is cool"):
     '''
     Displays python, and text
     '''
-    pytxt = "Python {}".format(text)
-    return pytxt.replace('_', ' ')
+    p = "Python {}".format(text)
+    return p.replace('_', ' ')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
