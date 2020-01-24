@@ -6,6 +6,7 @@ listen: 0.0.00, port 5000
 from flask import Flask
 app = Flask(__name__)
 
+
 @app.route('/', strict_slashes=False)
 def hbnb_hello():
     '''
